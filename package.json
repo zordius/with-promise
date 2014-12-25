@@ -1,0 +1,47 @@
+{
+  "name": "with-promise",
+  "version": "0.0.1",
+  "description": "An extended promise to keep the context persistently",
+  "author": "Zordius <zordius@yahoo-inc.com>",
+  "contributors": [
+    {
+      "name": "Zordius Chen",
+      "email": "zordius@gmail.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/zordius/with-promise.git"
+  },
+  "keywords": [
+    "context",
+    "this",
+    "promise"
+  ],
+  "scripts": {
+    "build_std": "browserify index.js -s WithPromise -o dist/with-promise.js",
+    "build_dbg": "browserify index.js -d -s WithPromise -o dist/with-promise-dbg.js",
+    "build_tst": "browserify test/test.js -o dist/browserTest.js",
+    "build_min": "uglifyjs dist/with-promise.js -c -o dist/with-promise-min.js",
+    "coverage": "istanbul cover -- _mocha -R spec",
+    "test": "mocha -R spec"
+  },
+  "main": "./index.js",
+  "devDependencies": {
+    "chai": "*",
+    "istanbul": "*",
+    "mocha": "*"
+  },
+  "engines": {
+    "node": ">=0.8"
+  },
+  "bugs": {
+    "url": "https://github.com/zordius/with-promise/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/zordius/with-promise/blob/master/LICENSE.txt"
+    }
+  ]
+}
