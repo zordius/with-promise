@@ -41,13 +41,16 @@ Usage
 -----
 
 ```javascript
-var wpromise = require('with-promise');
+var WithPromise = require('with-promise');
 
-// create a withPromise by a resolver function and set this == context
-var myPromise = wpromise.create(context, resolver);
+// create a Promise by a resolver function and set context
+var myPromise = WithPromise.create(resolver, context);
 
-// create a resolved withPromise
-var myPromise = wpromise.resolve(value);
+// create a resolved Promise
+var myPromise = WithPromise.resolve(value, context);
+
+// create a rejected Promise
+var myPromise = WithPromise.reject(value, context);
 
 // all this == context
 myPromise.then(function () {
