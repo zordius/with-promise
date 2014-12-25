@@ -16,13 +16,13 @@ module.exports = function (grunt) {
           urls: ['http://localhost:9999/test/'],
           testname: 'Mocha Unit Test for with-promise',
           sauceConfig: {
-              tags: [process.env.TRAVIS_JOB_ID, process.env.TRAVIS_COMMIT, 'jpp', 'mocha'],
+              tags: [process.env.TRAVIS_JOB_ID, process.env.TRAVIS_COMMIT, 'withPromise', 'mocha'],
               public: 'public'
           },
           detailedError: true,
           concurrency: 2,
           maxPollRetries: 3,
-          'max-duration': 120,
+          'max-duration': 180,
           browsers: [
             {browserName: 'chrome'},
             {browserName: 'firefox'},
@@ -40,12 +40,12 @@ module.exports = function (grunt) {
             {browserName: 'iphone', version:'8.1', platform: 'OS X 10.9'},
             {browserName: 'iphone', version:'8.0', platform: 'OS X 10.9'},
             {browserName: 'iphone', version:'7.1', platform: 'OS X 10.9'},
-            {browserName: 'iphone', version:'7.0', platform: 'OS X 10.9'},
+//            {browserName: 'iphone', version:'7.0', platform: 'OS X 10.9'},
             {browserName: 'iphone', version:'6.1', platform: 'OS X 10.8'},
             {browserName: 'ipad', version:'8.1', platform: 'OS X 10.9'},
             {browserName: 'ipad', version:'8.0', platform: 'OS X 10.9'},
             {browserName: 'ipad', version:'7.1', platform: 'OS X 10.9'},
-            {browserName: 'ipad', version:'7.0', platform: 'OS X 10.9'},
+//            {browserName: 'ipad', version:'7.0', platform: 'OS X 10.9'},
             {browserName: 'ipad', version:'6.1', platform: 'OS X 10.8'}
           ]
         }
