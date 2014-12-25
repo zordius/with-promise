@@ -30,12 +30,12 @@ var wpromise =  require('with-promise');
 Features
 --------
 
-* Extend promise, make all `.then()` , `.catch()` functions be executed with `this`
+* Extended Promise, make all `.then()` , `.catch()` handlers be executed with your assigned context: `this` .
 
 Notice
 ------
 
-**you should use polyfills** to ensure with-promise works well. You can try <a href="http://polyfill.io">polyfill.io</a> or <a href="http://polyfills.io/">polyfills.io</a>. For nodejs, you can try <a href="https://github.com/jakearchibald/es6-promise">es6-promise</a> or <a href="https://github.com/yahoo/ypromise">ypromise</a>.
+**You should use polyfills** providing Promise to ensure with-promise works well. You can try <a href="http://polyfill.io">polyfill.io</a> or <a href="http://polyfills.io/">polyfills.io</a>. For nodejs, you can try <a href="https://github.com/jakearchibald/es6-promise">es6-promise</a> or <a href="https://github.com/yahoo/ypromise">ypromise</a>.
 
 Usage
 -----
@@ -60,3 +60,4 @@ myPromise.then(function () {
 }).catch(function () {
     // this == context
 });
+```
