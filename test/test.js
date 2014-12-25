@@ -4,7 +4,7 @@ var assert = require('chai').assert,
     WithPromise = require('..');
 
 describe('WithPromise', function () {
-    it('should be a promise constructor', function (done) {
+    it('.create() should return a promise', function (done) {
         var P = WithPromise.create(function () {});
 
         assert.equal('object', typeof P);
@@ -59,6 +59,22 @@ describe('WithPromise', function () {
             return D;
         }).then(function (E) {
             assert.deepEqual({b: {a: 1 }, c:'OK', d:'ya', two:{a: 1 }}, E);
+            done();
+        });
+    });
+
+    it('.resolve() should create a resolved promise', function (done) {
+        WithPromise.resolve(123, {a: 2}).then(function (D) {
+            assert.equal(123, D);
+            assert.equal(2, this.a);
+            done();
+        });
+    });
+
+    it('.reject() should create a rejected promise', function (done) {
+        WithPromise.reject(123, {a: 2})['catch'](function (D) {
+            assert.equal(123, D);
+            assert.equal(2, this.a);
             done();
         });
     });

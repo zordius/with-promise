@@ -40,7 +40,7 @@ WithPromise.resolve = function (value, context) {
 };
 
 WithPromise.reject = function (error, context) {
-    return new WithPromise(Promise.reject(value), context);
+    return new WithPromise(Promise.reject(error), context);
 };
 
 module.exports = WithPromise;
