@@ -19,12 +19,12 @@ In browser:
 
 In an AMD loader:
 ```javascript
-require('with-promise', function (wpromise) {/*....*/});
+require('with-promise', function (WithPromise) {/*....*/});
 ```
 
 In nodejs:
 ```javascript
-var wpromise =  require('with-promise');
+var WithPromise =  require('with-promise');
 ```
 
 Features
