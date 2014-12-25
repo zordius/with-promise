@@ -78,4 +78,12 @@ describe('WithPromise', function () {
             done();
         });
     });
+
+    it('should create a rejected promise when error in executor', function (done) {
+        WithPromise.create(function () {throw new Error(123)}, {a: 2}).catch(function (E) {
+            assert.equal(2, this.a);
+            assert.equal(123, E.message);
+            done();
+        });
+    });
 });
