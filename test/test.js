@@ -20,7 +20,7 @@ describe('WithPromise', function () {
         }, {a: 1});
     });
 
-    it('should call then handler with context', function (done) {
+    it('should call .then() handler with context', function (done) {
         WithPromise.create(function (resolve, reject) {
             resolve({b: this, c: 'OK'});
         }, {a: 1}).then(function (D) {
@@ -30,7 +30,7 @@ describe('WithPromise', function () {
         });
     });
 
-    it('should call then reject handler with context', function (done) {
+    it('should call .then() reject handler with context', function (done) {
         WithPromise.create(function (resolve, reject) {
             reject({b: this, c: 'OK'});
         }, {a: 1}).then(undefined, function (D) {
@@ -40,12 +40,25 @@ describe('WithPromise', function () {
         });
     });
 
-    it('should call catch with context', function (done) {
+    it('should call .catch() with context', function (done) {
         WithPromise.create(function (resolve, reject) {
             reject({b: this, c: 'OK'});
         }, {a: 1})['catch'](function (D) {
             assert.equal(1, D.b.a);
             assert.equal('OK', D.c);
+            done();
+        });
+    });
+
+    it('should keep context when .then() many times', function (done) {
+        WithPromise.create(function (resolve, reject) {
+            resolve({b: this, c: 'OK'});
+        }, {a: 1}).then(function (D) {
+            D.d = 'ya';
+            D.two = this;
+            return D;
+        }).then(function (E) {
+            assert.deepEqual({b: {a: 1 }, c:'OK', d:'ya', two:{a: 1 }}, E);
             done();
         });
     });
