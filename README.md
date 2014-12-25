@@ -5,6 +5,8 @@ An extended promise to keep the context persistently
 
 [![npm version](https://img.shields.io/npm/v/with-promise.svg)](https://www.npmjs.org/package/with-promise) [![Dependency Status](https://david-dm.org/zordius/with-promise.svg)](https://david-dm.org/zordius/with-promise) [![Build Status](https://travis-ci.org/zordius/with-promise.svg?branch=master)](https://travis-ci.org/zordius/with-promise) [![Test Coverage](https://codeclimate.com/github/zordius/with-promise/badges/coverage.svg)](https://codeclimate.com/github/zordius/with-promise) [![Code Climate](https://codeclimate.com/github/zordius/with-promise/badges/gpa.svg)](https://codeclimate.com/github/zordius/with-promise) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
 
+[![Sauce Test Status](badge.png)](https://saucelabs.com/u/zordius_oss)
+
 Installation
 ------------
 
