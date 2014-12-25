@@ -22,7 +22,7 @@ module.exports = function (grunt) {
           detailedError: true,
           concurrency: 2,
           maxPollRetries: 3,
-          'max-duration': 60,
+          'max-duration': 120,
           browsers: [
             {browserName: 'chrome'},
             {browserName: 'firefox'},
