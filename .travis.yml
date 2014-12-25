@@ -4,7 +4,6 @@ node_js:
 script:
   - npm test
   - ./travis.sh
-sudo: false
 env:
   global:
     - secure: "Xj3KvVPgiQP28+3YRrRzOp+EYeietz72XUv0H3XJwRyJn/Sg7uzlrd5bEjYg6AoRkd0onbLM/QFJQk0WuqogLRPRteorSORwus4PKf0lsfVBp94i/8+UFxEIxUslAEZq57+23na5+7l83K8CxSPtoxax7/umaoB/MDhL40oZ35I="
