@@ -19,4 +19,34 @@ describe('WithPromise', function () {
             done();
         }, {a: 1});
     });
+
+    it('should call then handler with context', function (done) {
+        WithPromise.create(function (resolve, reject) {
+            resolve({b: this, c: 'OK'});
+        }, {a: 1}).then(function (D) {
+            assert.equal(1, D.b.a);
+            assert.equal('OK', D.c);
+            done();
+        });
+    });
+
+    it('should call then reject handler with context', function (done) {
+        WithPromise.create(function (resolve, reject) {
+            reject({b: this, c: 'OK'});
+        }, {a: 1}).then(undefined, function (D) {
+            assert.equal(1, D.b.a);
+            assert.equal('OK', D.c);
+            done();
+        });
+    });
+
+    it('should call catch with context', function (done) {
+        WithPromise.create(function (resolve, reject) {
+            reject({b: this, c: 'OK'});
+        }, {a: 1})['catch'](function (D) {
+            assert.equal(1, D.b.a);
+            assert.equal('OK', D.c);
+            done();
+        });
+    });
 });
