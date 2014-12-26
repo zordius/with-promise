@@ -10,14 +10,14 @@ var WithPromise = function (promise, context) {
 WithPromise.prototype = {
     constructor: WithPromise,
     wrap: function (promise) {
-        return new WithPromise(promise, this);
+        return new WithPromise(promise, this._with_context);
     },
 
     then: function (resolve, reject) {
         var self = this;
-        return this.wrap(this._with_promise.then(function () {
+        return this.wrap(this._with_promise.then(resolve ? function () {
             return resolve.apply(self._with_context, arguments);
-        }, reject ? function () {
+        } : undefined, reject ? function () {
             return reject.apply(self._with_context, arguments);
         } : undefined));
     },
@@ -6268,6 +6268,7 @@ describe('WithPromise', function () {
             return D;
         }).then(function (E) {
             assert.deepEqual({b: {a: 1 }, c:'OK', d:'ya', two:{a: 1 }}, E);
+            assert.equal(1, this.a);
             done();
         });
     });
@@ -6284,6 +6285,14 @@ describe('WithPromise', function () {
         WithPromise.reject(123, {a: 2})['catch'](function (D) {
             assert.equal(123, D);
             assert.equal(2, this.a);
+            done();
+        });
+    });
+
+    it('should create a rejected promise when error in executor', function (done) {
+        WithPromise.create(function () {throw new Error(123)}, {a: 2}).catch(function (E) {
+            assert.equal(2, this.a);
+            assert.equal(123, E.message);
             done();
         });
     });
