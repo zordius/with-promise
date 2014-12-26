@@ -1,6 +1,6 @@
 {
   "name": "with-promise",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "An extended promise to keep the context persistently",
   "author": "Zordius <zordius@yahoo-inc.com>",
   "contributors": [
