@@ -9,14 +9,14 @@ var WithPromise = function (promise, context) {
 WithPromise.prototype = {
     constructor: WithPromise,
     wrap: function (promise) {
-        return new WithPromise(promise, this);
+        return new WithPromise(promise, this._with_context);
     },
 
     then: function (resolve, reject) {
         var self = this;
-        return this.wrap(this._with_promise.then(function () {
+        return this.wrap(this._with_promise.then(resolve ? function () {
             return resolve.apply(self._with_context, arguments);
-        }, reject ? function () {
+        } : undefined, reject ? function () {
             return reject.apply(self._with_context, arguments);
         } : undefined));
     },

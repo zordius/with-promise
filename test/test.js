@@ -59,6 +59,7 @@ describe('WithPromise', function () {
             return D;
         }).then(function (E) {
             assert.deepEqual({b: {a: 1 }, c:'OK', d:'ya', two:{a: 1 }}, E);
+            assert.equal(1, this.a);
             done();
         });
     });
