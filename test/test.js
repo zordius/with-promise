@@ -95,7 +95,7 @@ describe('WithPromise', function () {
             done();
         });
     });
- 
+
     it('.all() should wrap Promise.all with context for executor', function (done) {
         WithPromise.all([1, 2,
             WithPromise.create(function () {throw new Error(123)}, {a: 3})
@@ -105,5 +105,22 @@ describe('WithPromise', function () {
             done();
         });
     });
- 
+
+    it('.all() should wrap Promise.all with context for .then()', function (done) {
+        WithPromise.all([1, 2,
+            WithPromise.create(function (resolve) {
+                resolve(this.a * 2);
+            }, {a: 3})
+        ], {a: 2, b: 3}).then(function (D) {
+            assert.equal(2, this.a);
+            assert.equal(3, this.b);
+            this.c = 4;
+            assert.deepEqual([1, 2, 6], D);
+        }).then(function () {
+            assert.equal(2, this.a);
+            assert.equal(3, this.b);
+            assert.equal(4, this.c);
+            done();
+        });
+    });
 });
