@@ -43,4 +43,16 @@ WithPromise.reject = function (error, context) {
     return new WithPromise(Promise.reject(error), context);
 };
 
+WithPromise.all = function (list, context) {
+    var promises = [];
+
+    if (list && list.forEach) {
+        list.forEach(function (V) {
+            promises.push(WithPromise.resolve(V, context));
+        });
+    }
+
+    return new WithPromise(Promise.all(promises), context);
+};
+
 module.exports = WithPromise;
