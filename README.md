@@ -54,6 +54,10 @@ var myPromise = WithPromise.resolve(value, context);
 // create a rejected Promise
 var myPromise = WithPromise.reject(value, context);
 
+// wrap Promise.all with context
+var allPromises = WithPromise.all(promises, context);
+
+
 // all this == context
 myPromise.then(function () {
     // this == context
