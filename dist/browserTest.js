@@ -44,6 +44,18 @@ WithPromise.reject = function (error, context) {
     return new WithPromise(Promise.reject(error), context);
 };
 
+WithPromise.all = function (list, context) {
+    var promises = [];
+
+    if (list && list.forEach) {
+        list.forEach(function (V) {
+            promises.push(WithPromise.resolve(V, context));
+        });
+    }
+
+    return new WithPromise(Promise.all(promises), context);
+};
+
 module.exports = WithPromise;
 },{}],2:[function(require,module,exports){
 /*!
@@ -1194,8 +1206,6 @@ var INVALID_BASE64_RE = /[^+\/0-9A-z\-]/g
 function base64clean (str) {
   // Node strips out invalid characters like \n and \t from the string, base64-js does not
   str = stringtrim(str).replace(INVALID_BASE64_RE, '')
-  // replace url-safe space and slash
-  str = str.replace(/-/g, '+').replace(/_/g, '/')
   // Node converts strings with length < 2 to ''
   if (str.length < 2) return ''
   // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
@@ -1380,12 +1390,16 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	var NUMBER = '0'.charCodeAt(0)
 	var LOWER  = 'a'.charCodeAt(0)
 	var UPPER  = 'A'.charCodeAt(0)
+	var PLUS_URL_SAFE = '-'.charCodeAt(0)
+	var SLASH_URL_SAFE = '_'.charCodeAt(0)
 
 	function decode (elt) {
 		var code = elt.charCodeAt(0)
-		if (code === PLUS)
+		if (code === PLUS ||
+		    code === PLUS_URL_SAFE)
 			return 62 // '+'
-		if (code === SLASH)
+		if (code === SLASH ||
+		    code === SLASH_URL_SAFE)
 			return 63 // '/'
 		if (code < NUMBER)
 			return -1 //no match
@@ -6293,6 +6307,42 @@ describe('WithPromise', function () {
         WithPromise.create(function () {throw new Error(123)}, {a: 2}).catch(function (E) {
             assert.equal(2, this.a);
             assert.equal(123, E.message);
+            done();
+        });
+    });
+
+    it('.all() should wrap Promise.all with context', function (done) {
+        WithPromise.all([1, 2, 3], {a: 2}).then(function (D) {
+            assert.equal(2, this.a);
+            assert.deepEqual([1, 2, 3], D);
+            done();
+        });
+    });
+
+    it('.all() should wrap Promise.all with context for executor', function (done) {
+        WithPromise.all([1, 2,
+            WithPromise.create(function () {throw new Error(123)}, {a: 3})
+        ], {a: 2}).catch(function (E) {
+            assert.equal(2, this.a);
+            assert.equal(123, E.message);
+            done();
+        });
+    });
+
+    it('.all() should wrap Promise.all with context for .then()', function (done) {
+        WithPromise.all([1, 2,
+            WithPromise.create(function (resolve) {
+                resolve(this.a * 2);
+            }, {a: 3})
+        ], {a: 2, b: 3}).then(function (D) {
+            assert.equal(2, this.a);
+            assert.equal(3, this.b);
+            this.c = 4;
+            assert.deepEqual([1, 2, 6], D);
+        }).then(function () {
+            assert.equal(2, this.a);
+            assert.equal(3, this.b);
+            assert.equal(4, this.c);
             done();
         });
     });
