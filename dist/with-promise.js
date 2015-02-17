@@ -14,16 +14,14 @@ WithPromise.prototype = {
     },
 
     then: function (resolve, reject) {
-        var self = this;
         return this.wrap(this._with_promise.then(
-            resolve ? resolve.bind(self._with_context) : undefined,
-            reject ? reject.bind(self._with_context) : undefined
+            resolve ? resolve.bind(this._with_context) : undefined,
+            reject ? reject.bind(this._with_context) : undefined
         ));
     },
 
     'catch': function (next) {
-        var self = this;
-        return this.wrap(this._with_promise['catch'](next.bind(self._with_context)));
+        return this.wrap(this._with_promise['catch'](next.bind(this._with_context)));
     }
 };
 
