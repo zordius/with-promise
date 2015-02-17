@@ -34,16 +34,16 @@ module.exports = function (grunt) {
             {browserName: 'Android', version:'4.4', platform: 'Linux'},
             {browserName: 'Android', version:'4.1', platform: 'Linux'},
             {browserName: 'Android', version:'4.0', platform: 'Linux'},
-            {browserName: 'iphone', deviceName: 'iPhone Simulator', version:'8.1'},
-            {browserName: 'iphone', deviceName: 'iPhone Simulator', version:'8.0'},
-            {browserName: 'iphone', deviceName: 'iPhone Simulator', version:'7.1'},
-            {browserName: 'iphone', deviceName: 'iPhone Simulator', version:'7.0'},
-            {browserName: 'iphone', deviceName: 'iPhone Simulator', version:'6.1'},
-            {browserName: 'ipad', deviceName: 'iPad Simulator', version:'8.1'},
-            {browserName: 'ipad', deviceName: 'iPad Simulator', version:'8.0'},
-            {browserName: 'ipad', deviceName: 'iPad Simulator', version:'7.1'},
-            {browserName: 'ipad', deviceName: 'iPad Simulator', version:'7.0'},
-            {browserName: 'ipad', deviceName: 'iPad Simulator', version:'6.1'}
+            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'8.1', appiumVersion: '1.3.4'},
+            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'8.0', appiumVersion: '1.3.4'},
+            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'7.1', appiumVersion: '1.3.4'},
+            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'7.0', appiumVersion: '1.3.4'},
+            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'6.1', appiumVersion: '1.3.4'},
+            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'8.1', appiumVersion: '1.3.4'},
+            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'8.0', appiumVersion: '1.3.4'},
+            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'7.1', appiumVersion: '1.3.4'},
+            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'7.0', appiumVersion: '1.3.4'},
+            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'6.1', appiumVersion: '1.3.4'}
           ]
         }
       }
