@@ -15,25 +15,20 @@ WithPromise.prototype = {
 
     then: function (resolve, reject) {
         var self = this;
-        return this.wrap(this._with_promise.then(resolve ? function () {
-            return resolve.apply(self._with_context, arguments);
-        } : undefined, reject ? function () {
-            return reject.apply(self._with_context, arguments);
-        } : undefined));
+        return this.wrap(this._with_promise.then(
+            resolve ? resolve.bind(self._with_context) : undefined,
+            reject ? reject.bind(self._with_context) : undefined
+        ));
     },
 
     'catch': function (next) {
         var self = this;
-        return this.wrap(this._with_promise['catch'](function () {
-            return next.apply(self._with_context, arguments);
-        }));
+        return this.wrap(this._with_promise['catch'](next.bind(self._with_context)));
     }
 };
 
 WithPromise.create = function (executor, context) {
-    return new WithPromise(new Promise(function () {
-        executor.apply(context, arguments);
-    }), context);
+    return new WithPromise(new Promise(executor.bind(context)), context);
 };
 
 WithPromise.resolve = function (value, context) {
@@ -104,7 +99,7 @@ Buffer.TYPED_ARRAY_SUPPORT = (function () {
     var buf = new ArrayBuffer(0)
     var arr = new Uint8Array(buf)
     arr.foo = function () { return 42 }
-    return 42 === arr.foo() && // typed array instances can be augmented
+    return arr.foo() === 42 && // typed array instances can be augmented
         typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
         new Uint8Array(1).subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
   } catch (e) {
@@ -133,59 +128,66 @@ function Buffer (subject, encoding, noZero) {
   // Find the length
   var length
   if (type === 'number')
-    length = subject > 0 ? subject >>> 0 : 0
+    length = +subject
   else if (type === 'string') {
     length = Buffer.byteLength(subject, encoding)
   } else if (type === 'object' && subject !== null) { // assume object is array-like
     if (subject.type === 'Buffer' && isArray(subject.data))
       subject = subject.data
-    length = +subject.length > 0 ? Math.floor(+subject.length) : 0
-  } else
+    length = +subject.length
+  } else {
     throw new TypeError('must start with number, buffer, array or string')
+  }
 
   if (length > kMaxLength)
     throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
       'size: 0x' + kMaxLength.toString(16) + ' bytes')
 
-  var buf
+  if (length < 0)
+    length = 0
+  else
+    length >>>= 0 // Coerce to uint32.
+
+  var self = this
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     // Preferred: Return an augmented `Uint8Array` instance for best performance
-    buf = Buffer._augment(new Uint8Array(length))
+    /*eslint-disable consistent-this */
+    self = Buffer._augment(new Uint8Array(length))
+    /*eslint-enable consistent-this */
   } else {
     // Fallback: Return THIS instance of Buffer (created by `new`)
-    buf = this
-    buf.length = length
-    buf._isBuffer = true
+    self.length = length
+    self._isBuffer = true
   }
 
   var i
   if (Buffer.TYPED_ARRAY_SUPPORT && typeof subject.byteLength === 'number') {
     // Speed optimization -- use set if we're copying from a typed array
-    buf._set(subject)
+    self._set(subject)
   } else if (isArrayish(subject)) {
     // Treat array-ish objects as a byte array
     if (Buffer.isBuffer(subject)) {
       for (i = 0; i < length; i++)
-        buf[i] = subject.readUInt8(i)
+        self[i] = subject.readUInt8(i)
     } else {
       for (i = 0; i < length; i++)
-        buf[i] = ((subject[i] % 256) + 256) % 256
+        self[i] = ((subject[i] % 256) + 256) % 256
     }
   } else if (type === 'string') {
-    buf.write(subject, 0, encoding)
+    self.write(subject, 0, encoding)
   } else if (type === 'number' && !Buffer.TYPED_ARRAY_SUPPORT && !noZero) {
     for (i = 0; i < length; i++) {
-      buf[i] = 0
+      self[i] = 0
     }
   }
 
   if (length > 0 && length <= Buffer.poolSize)
-    buf.parent = rootParent
+    self.parent = rootParent
 
-  return buf
+  return self
 }
 
-function SlowBuffer(subject, encoding, noZero) {
+function SlowBuffer (subject, encoding, noZero) {
   if (!(this instanceof SlowBuffer))
     return new SlowBuffer(subject, encoding, noZero)
 
@@ -201,6 +203,8 @@ Buffer.isBuffer = function (b) {
 Buffer.compare = function (a, b) {
   if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b))
     throw new TypeError('Arguments must be Buffers')
+
+  if (a === b) return 0
 
   var x = a.length
   var y = b.length
@@ -342,6 +346,7 @@ Buffer.prototype.toString = function (encoding, start, end) {
 
 Buffer.prototype.equals = function (b) {
   if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return true
   return Buffer.compare(this, b) === 0
 }
 
@@ -358,6 +363,7 @@ Buffer.prototype.inspect = function () {
 
 Buffer.prototype.compare = function (b) {
   if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return 0
   return Buffer.compare(this, b)
 }
 
@@ -442,7 +448,7 @@ Buffer.prototype.write = function (string, offset, length, encoding) {
   offset = Number(offset) || 0
 
   if (length < 0 || offset < 0 || offset > this.length)
-    throw new RangeError('attempt to write outside buffer bounds');
+    throw new RangeError('attempt to write outside buffer bounds')
 
   var remaining = this.length - offset
   if (!length) {
@@ -565,7 +571,7 @@ Buffer.prototype.slice = function (start, end) {
   end = end === undefined ? len : ~~end
 
   if (start < 0) {
-    start += len;
+    start += len
     if (start < 0)
       start = 0
   } else if (start > len) {
@@ -634,7 +640,7 @@ Buffer.prototype.readUIntBE = function (offset, byteLength, noAssert) {
   var val = this[offset + --byteLength]
   var mul = 1
   while (byteLength > 0 && (mul *= 0x100))
-    val += this[offset + --byteLength] * mul;
+    val += this[offset + --byteLength] * mul
 
   return val
 }
@@ -1042,7 +1048,7 @@ Buffer.prototype.writeDoubleBE = function (value, offset, noAssert) {
 
 // copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
 Buffer.prototype.copy = function (target, target_start, start, end) {
-  var source = this
+  var self = this // source
 
   if (!start) start = 0
   if (!end && end !== 0) end = this.length
@@ -1052,12 +1058,12 @@ Buffer.prototype.copy = function (target, target_start, start, end) {
 
   // Copy 0 bytes; we're done
   if (end === start) return 0
-  if (target.length === 0 || source.length === 0) return 0
+  if (target.length === 0 || self.length === 0) return 0
 
   // Fatal error conditions
   if (target_start < 0)
     throw new RangeError('targetStart out of bounds')
-  if (start < 0 || start >= source.length) throw new RangeError('sourceStart out of bounds')
+  if (start < 0 || start >= self.length) throw new RangeError('sourceStart out of bounds')
   if (end < 0) throw new RangeError('sourceEnd out of bounds')
 
   // Are we oob?
@@ -1231,61 +1237,50 @@ function toHex (n) {
   return n.toString(16)
 }
 
-function utf8ToBytes(string, units) {
-  var codePoint, length = string.length
-  var leadSurrogate = null
+function utf8ToBytes (string, units) {
   units = units || Infinity
+  var codePoint
+  var length = string.length
+  var leadSurrogate = null
   var bytes = []
   var i = 0
 
-  for (; i<length; i++) {
+  for (; i < length; i++) {
     codePoint = string.charCodeAt(i)
 
     // is surrogate component
     if (codePoint > 0xD7FF && codePoint < 0xE000) {
-
       // last char was a lead
       if (leadSurrogate) {
-
         // 2 leads in a row
         if (codePoint < 0xDC00) {
           if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
           leadSurrogate = codePoint
           continue
-        }
-
-        // valid surrogate pair
-        else {
+        } else {
+          // valid surrogate pair
           codePoint = leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00 | 0x10000
           leadSurrogate = null
         }
-      }
+      } else {
+        // no lead yet
 
-      // no lead yet
-      else {
-
-        // unexpected trail
         if (codePoint > 0xDBFF) {
+          // unexpected trail
           if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
           continue
-        }
-
-        // unpaired lead
-        else if (i + 1 === length) {
+        } else if (i + 1 === length) {
+          // unpaired lead
           if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
           continue
-        }
-
-        // valid lead
-        else {
+        } else {
+          // valid lead
           leadSurrogate = codePoint
           continue
         }
       }
-    }
-
-    // valid bmp char, but last char was a lead
-    else if (leadSurrogate) {
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
       if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
       leadSurrogate = null
     }
@@ -1294,32 +1289,28 @@ function utf8ToBytes(string, units) {
     if (codePoint < 0x80) {
       if ((units -= 1) < 0) break
       bytes.push(codePoint)
-    }
-    else if (codePoint < 0x800) {
+    } else if (codePoint < 0x800) {
       if ((units -= 2) < 0) break
       bytes.push(
         codePoint >> 0x6 | 0xC0,
         codePoint & 0x3F | 0x80
-      );
-    }
-    else if (codePoint < 0x10000) {
+      )
+    } else if (codePoint < 0x10000) {
       if ((units -= 3) < 0) break
       bytes.push(
         codePoint >> 0xC | 0xE0,
         codePoint >> 0x6 & 0x3F | 0x80,
         codePoint & 0x3F | 0x80
-      );
-    }
-    else if (codePoint < 0x200000) {
+      )
+    } else if (codePoint < 0x200000) {
       if ((units -= 4) < 0) break
       bytes.push(
         codePoint >> 0x12 | 0xF0,
         codePoint >> 0xC & 0x3F | 0x80,
         codePoint >> 0x6 & 0x3F | 0x80,
         codePoint & 0x3F | 0x80
-      );
-    }
-    else {
+      )
+    } else {
       throw new Error('Invalid code point')
     }
   }
@@ -1340,7 +1331,6 @@ function utf16leToBytes (str, units) {
   var c, hi, lo
   var byteArray = []
   for (var i = 0; i < str.length; i++) {
-
     if ((units -= 2) < 0) break
 
     c = str.charCodeAt(i)
@@ -1358,7 +1348,7 @@ function base64ToBytes (str) {
 }
 
 function blitBuffer (src, dst, offset, length, unitSize) {
-  if (unitSize) length -= length % unitSize;
+  if (unitSize) length -= length % unitSize
   for (var i = 0; i < length; i++) {
     if ((i + offset >= dst.length) || (i >= src.length))
       break
@@ -1673,6 +1663,12 @@ exports.use = function (fn) {
 };
 
 /*!
+ * Utility Functions
+ */
+
+exports.util = util;
+
+/*!
  * Configuration
  */
 
@@ -1714,7 +1710,7 @@ exports.use(should);
 var assert = require('./chai/interface/assert');
 exports.use(assert);
 
-},{"./chai/assertion":8,"./chai/config":9,"./chai/core/assertions":10,"./chai/interface/assert":11,"./chai/interface/expect":12,"./chai/interface/should":13,"./chai/utils":24,"assertion-error":33}],8:[function(require,module,exports){
+},{"./chai/assertion":8,"./chai/config":9,"./chai/core/assertions":10,"./chai/interface/assert":11,"./chai/interface/expect":12,"./chai/interface/should":13,"./chai/utils":26,"assertion-error":35}],8:[function(require,module,exports){
 /*!
  * chai
  * http://chaijs.com
@@ -1723,7 +1719,6 @@ exports.use(assert);
  */
 
 var config = require('./config');
-var NOOP = function() { };
 
 module.exports = function (_chai, util) {
   /*!
@@ -1785,10 +1780,6 @@ module.exports = function (_chai, util) {
 
   Assertion.addChainableMethod = function (name, fn, chainingBehavior) {
     util.addChainableMethod(this.prototype, name, fn, chainingBehavior);
-  };
-
-  Assertion.addChainableNoop = function(name, fn) {
-    util.addChainableMethod(this.prototype, name, NOOP, fn);
   };
 
   Assertion.overwriteProperty = function (name, fn) {
@@ -1931,6 +1922,7 @@ module.exports = function (chai, _) {
    * - been
    * - is
    * - that
+   * - which
    * - and
    * - has
    * - have
@@ -1945,7 +1937,7 @@ module.exports = function (chai, _) {
 
   [ 'to', 'be', 'been'
   , 'is', 'and', 'has', 'have'
-  , 'with', 'that', 'at'
+  , 'with', 'that', 'which', 'at'
   , 'of', 'same' ].forEach(function (chain) {
     Assertion.addProperty(chain, function () {
       return this;
@@ -1986,6 +1978,41 @@ module.exports = function (chai, _) {
 
   Assertion.addProperty('deep', function () {
     flag(this, 'deep', true);
+  });
+
+  /**
+   * ### .any
+   *
+   * Sets the `any` flag, (opposite of the `all` flag)
+   * later used in the `keys` assertion. 
+   *
+   *     expect(foo).to.have.any.keys('bar', 'baz');
+   *
+   * @name any
+   * @api public
+   */
+
+  Assertion.addProperty('any', function () {
+    flag(this, 'any', true);
+    flag(this, 'all', false)
+  });
+
+
+  /**
+   * ### .all
+   *
+   * Sets the `all` flag (opposite of the `any` flag) 
+   * later used by the `keys` assertion.
+   *
+   *     expect(foo).to.have.all.keys('bar', 'baz');
+   *
+   * @name all
+   * @api public
+   */
+
+  Assertion.addProperty('all', function () {
+    flag(this, 'all', true);
+    flag(this, 'any', false);
   });
 
   /**
@@ -2033,7 +2060,7 @@ module.exports = function (chai, _) {
    * The `include` and `contain` assertions can be used as either property
    * based language chains or as methods to assert the inclusion of an object
    * in an array or a substring in a string. When used as language chains,
-   * they toggle the `contain` flag for the `keys` assertion.
+   * they toggle the `contains` flag for the `keys` assertion.
    *
    *     expect([1,2,3]).to.include(2);
    *     expect('foobar').to.contain('foo');
@@ -2041,6 +2068,8 @@ module.exports = function (chai, _) {
    *
    * @name include
    * @alias contain
+   * @alias includes
+   * @alias contains
    * @param {Object|String|Number} obj
    * @param {String} message _optional_
    * @api public
@@ -2066,11 +2095,11 @@ module.exports = function (chai, _) {
         for (var k in val) new Assertion(obj).property(k, val[k]);
         return;
       }
-      var subset = {}
-      for (var k in val) subset[k] = obj[k]
+      var subset = {};
+      for (var k in val) subset[k] = obj[k];
       expected = _.eql(subset, val);
     } else {
-      expected = obj && ~obj.indexOf(val)
+      expected = obj && ~obj.indexOf(val);
     }
     this.assert(
         expected
@@ -2080,6 +2109,8 @@ module.exports = function (chai, _) {
 
   Assertion.addChainableMethod('include', include, includeChainingBehavior);
   Assertion.addChainableMethod('contain', include, includeChainingBehavior);
+  Assertion.addChainableMethod('contains', include, includeChainingBehavior);
+  Assertion.addChainableMethod('includes', include, includeChainingBehavior);
 
   /**
    * ### .ok
@@ -2092,15 +2123,11 @@ module.exports = function (chai, _) {
    *     expect(undefined).to.not.be.ok;
    *     expect(null).to.not.be.ok;
    *
-   * Can also be used as a function, which prevents some linter errors.
-   *
-   *     expect('everthing').to.be.ok();
-   *     
    * @name ok
    * @api public
    */
 
-  Assertion.addChainableNoop('ok', function () {
+  Assertion.addProperty('ok', function () {
     this.assert(
         flag(this, 'object')
       , 'expected #{this} to be truthy'
@@ -2115,15 +2142,11 @@ module.exports = function (chai, _) {
    *     expect(true).to.be.true;
    *     expect(1).to.not.be.true;
    *
-   * Can also be used as a function, which prevents some linter errors.
-   *
-   *     expect(true).to.be.true();
-   *
    * @name true
    * @api public
    */
 
-  Assertion.addChainableNoop('true', function () {
+  Assertion.addProperty('true', function () {
     this.assert(
         true === flag(this, 'object')
       , 'expected #{this} to be true'
@@ -2140,15 +2163,11 @@ module.exports = function (chai, _) {
    *     expect(false).to.be.false;
    *     expect(0).to.not.be.false;
    *
-   * Can also be used as a function, which prevents some linter errors.
-   *
-   *     expect(false).to.be.false();
-   *
    * @name false
    * @api public
    */
 
-  Assertion.addChainableNoop('false', function () {
+  Assertion.addProperty('false', function () {
     this.assert(
         false === flag(this, 'object')
       , 'expected #{this} to be false'
@@ -2165,15 +2184,11 @@ module.exports = function (chai, _) {
    *     expect(null).to.be.null;
    *     expect(undefined).not.to.be.null;
    *
-   * Can also be used as a function, which prevents some linter errors.
-   *
-   *     expect(null).to.be.null();
-   *
    * @name null
    * @api public
    */
 
-  Assertion.addChainableNoop('null', function () {
+  Assertion.addProperty('null', function () {
     this.assert(
         null === flag(this, 'object')
       , 'expected #{this} to be null'
@@ -2189,15 +2204,11 @@ module.exports = function (chai, _) {
    *     expect(undefined).to.be.undefined;
    *     expect(null).to.not.be.undefined;
    *
-   * Can also be used as a function, which prevents some linter errors.
-   *
-   *     expect(undefined).to.be.undefined();
-   *
    * @name undefined
    * @api public
    */
 
-  Assertion.addChainableNoop('undefined', function () {
+  Assertion.addProperty('undefined', function () {
     this.assert(
         undefined === flag(this, 'object')
       , 'expected #{this} to be undefined'
@@ -2218,15 +2229,11 @@ module.exports = function (chai, _) {
    *     expect(bar).to.not.exist;
    *     expect(baz).to.not.exist;
    *
-   * Can also be used as a function, which prevents some linter errors.
-   *
-   *     expect(foo).to.exist();
-   *
    * @name exist
    * @api public
    */
 
-  Assertion.addChainableNoop('exist', function () {
+  Assertion.addProperty('exist', function () {
     this.assert(
         null != flag(this, 'object')
       , 'expected #{this} to exist'
@@ -2246,15 +2253,11 @@ module.exports = function (chai, _) {
    *     expect('').to.be.empty;
    *     expect({}).to.be.empty;
    *
-   * Can also be used as a function, which prevents some linter errors.
-   *
-   *     expect([]).to.be.empty();
-   *
    * @name empty
    * @api public
    */
 
-  Assertion.addChainableNoop('empty', function () {
+  Assertion.addProperty('empty', function () {
     var obj = flag(this, 'object')
       , expected = obj;
 
@@ -2280,12 +2283,6 @@ module.exports = function (chai, _) {
    *       expect(arguments).to.be.arguments;
    *     }
    *
-   * Can also be used as a function, which prevents some linter errors.
-   *
-   *     function test () {
-   *       expect(arguments).to.be.arguments();
-   *     }
-   *
    * @name arguments
    * @alias Arguments
    * @api public
@@ -2301,8 +2298,8 @@ module.exports = function (chai, _) {
     );
   }
 
-  Assertion.addChainableNoop('arguments', checkArguments);
-  Assertion.addChainableNoop('Arguments', checkArguments);
+  Assertion.addProperty('arguments', checkArguments);
+  Assertion.addProperty('Arguments', checkArguments);
 
   /**
    * ### .equal(value)
@@ -2705,11 +2702,16 @@ module.exports = function (chai, _) {
   Assertion.addMethod('property', function (name, val, msg) {
     if (msg) flag(this, 'message', msg);
 
-    var descriptor = flag(this, 'deep') ? 'deep property ' : 'property '
+    var isDeep = !!flag(this, 'deep')
+      , descriptor = isDeep ? 'deep property ' : 'property '
       , negate = flag(this, 'negate')
       , obj = flag(this, 'object')
-      , value = flag(this, 'deep')
-        ? _.getPathValue(name, obj)
+      , pathInfo = isDeep ? _.getPathInfo(name, obj) : null
+      , hasProperty = isDeep
+        ? pathInfo.exists
+        : _.hasProperty(name, obj)
+      , value = isDeep
+        ? pathInfo.value
         : obj[name];
 
     if (negate && undefined !== val) {
@@ -2719,7 +2721,7 @@ module.exports = function (chai, _) {
       }
     } else {
       this.assert(
-          undefined !== value
+          hasProperty
         , 'expected #{this} to have a ' + descriptor + _.inspect(name)
         , 'expected #{this} to not have ' + descriptor + _.inspect(name));
     }
@@ -2865,42 +2867,87 @@ module.exports = function (chai, _) {
   /**
    * ### .keys(key1, [key2], [...])
    *
-   * Asserts that the target has exactly the given keys, or
-   * asserts the inclusion of some keys when using the
-   * `include` or `contain` modifiers.
+   * Asserts that the target contains any or all of the passed-in keys.
+   * Use in combination with `any`, `all`, `contains`, or `have` will affect 
+   * what will pass.
+   * 
+   * When used in conjunction with `any`, at least one key that is passed 
+   * in must exist in the target object. This is regardless whether or not 
+   * the `have` or `contain` qualifiers are used. Note, either `any` or `all`
+   * should be used in the assertion. If neither are used, the assertion is
+   * defaulted to `all`.
+   * 
+   * When both `all` and `contain` are used, the target object must have at 
+   * least all of the passed-in keys but may have more keys not listed.
+   * 
+   * When both `all` and `have` are used, the target object must both contain
+   * all of the passed-in keys AND the number of keys in the target object must
+   * match the number of keys passed in (in other words, a target object must 
+   * have all and only all of the passed-in keys).
+   * 
+   *     expect({ foo: 1, bar: 2 }).to.have.any.keys('foo', 'baz');
+   *     expect({ foo: 1, bar: 2 }).to.have.any.keys('foo');
+   *     expect({ foo: 1, bar: 2 }).to.contain.any.keys('bar', 'baz');
+   *     expect({ foo: 1, bar: 2 }).to.contain.any.keys(['foo']);
+   *     expect({ foo: 1, bar: 2 }).to.contain.any.keys({'foo': 6});
+   *     expect({ foo: 1, bar: 2 }).to.have.all.keys(['bar', 'foo']);
+   *     expect({ foo: 1, bar: 2 }).to.have.all.keys({'bar': 6, 'foo', 7});
+   *     expect({ foo: 1, bar: 2, baz: 3 }).to.contain.all.keys(['bar', 'foo']);
+   *     expect({ foo: 1, bar: 2, baz: 3 }).to.contain.all.keys([{'bar': 6}}]);
    *
-   *     expect({ foo: 1, bar: 2 }).to.have.keys(['foo', 'bar']);
-   *     expect({ foo: 1, bar: 2, baz: 3 }).to.contain.keys('foo', 'bar');
    *
    * @name keys
    * @alias key
-   * @param {String...|Array} keys
+   * @param {String...|Array|Object} keys
    * @api public
    */
 
   function assertKeys (keys) {
     var obj = flag(this, 'object')
       , str
-      , ok = true;
+      , ok = true
+      , mixedArgsMsg = 'keys must be given single argument of Array|Object|String, or multiple String arguments';
 
-    keys = keys instanceof Array
-      ? keys
-      : Array.prototype.slice.call(arguments);
+    switch (_.type(keys)) {
+      case "array":
+        if (arguments.length > 1) throw (new Error(mixedArgsMsg));
+        break;
+      case "object":
+        if (arguments.length > 1) throw (new Error(mixedArgsMsg));
+        keys = Object.keys(keys);
+        break;
+      default:
+        keys = Array.prototype.slice.call(arguments);
+    }
 
     if (!keys.length) throw new Error('keys required');
 
     var actual = Object.keys(obj)
       , expected = keys
-      , len = keys.length;
+      , len = keys.length
+      , any = flag(this, 'any')
+      , all = flag(this, 'all');
 
-    // Inclusion
-    ok = keys.every(function(key){
-      return ~actual.indexOf(key);
-    });
+    if (!any && !all) {
+      all = true;
+    }
 
-    // Strict
-    if (!flag(this, 'negate') && !flag(this, 'contains')) {
-      ok = ok && keys.length == actual.length;
+    // Has any
+    if (any) {
+      var intersection = expected.filter(function(key) {
+        return ~actual.indexOf(key);
+      });
+      ok = intersection.length > 0;
+    }
+
+    // Has all
+    if (all) {
+      ok = keys.every(function(key){
+        return ~actual.indexOf(key);
+      });
+      if (!flag(this, 'negate') && !flag(this, 'contains')) {
+        ok = ok && keys.length == actual.length;
+      }
     }
 
     // Key string
@@ -2909,7 +2956,12 @@ module.exports = function (chai, _) {
         return _.inspect(key);
       });
       var last = keys.pop();
-      str = keys.join(', ') + ', and ' + last;
+      if (all) {
+        str = keys.join(', ') + ', and ' + last;
+      }
+      if (any) {
+        str = keys.join(', ') + ', or ' + last;
+      }
     } else {
       str = _.inspect(keys[0]);
     }
@@ -2925,7 +2977,7 @@ module.exports = function (chai, _) {
         ok
       , 'expected #{this} to ' + str
       , 'expected #{this} to not ' + str
-      , expected.sort()
+      , expected.slice(0).sort()
       , actual.sort()
       , true
     );
@@ -3262,6 +3314,120 @@ module.exports = function (chai, _) {
         , subset
     );
   });
+
+  /**
+   * ### .change(function)
+   *
+   * Asserts that a function changes an object property
+   *
+   *     var obj = { val: 10 };
+   *     var fn = function() { obj.val += 3 };
+   *     var noChangeFn = function() { return 'foo' + 'bar'; }
+   *     expect(fn).to.change(obj, 'val');
+   *     expect(noChangFn).to.not.change(obj, 'val')
+   *
+   * @name change
+   * @alias changes
+   * @alias Change
+   * @param {String} object
+   * @param {String} property name
+   * @param {String} message _optional_
+   * @api public
+   */
+
+  function assertChanges (object, prop, msg) {
+    if (msg) flag(this, 'message', msg);
+    var fn = flag(this, 'object');
+    new Assertion(object, msg).to.have.property(prop);
+    new Assertion(fn).is.a('function');
+
+    var initial = object[prop];
+    fn();
+
+    this.assert(
+      initial !== object[prop]
+      , 'expected .' + prop + ' to change'
+      , 'expected .' + prop + ' to not change'
+    );
+  }
+
+  Assertion.addChainableMethod('change', assertChanges);
+  Assertion.addChainableMethod('changes', assertChanges);
+
+  /**
+   * ### .increase(function)
+   *
+   * Asserts that a function increases an object property
+   *
+   *     var obj = { val: 10 };
+   *     var fn = function() { obj.val = 15 };
+   *     expect(fn).to.increase(obj, 'val');
+   *
+   * @name increase
+   * @alias increases
+   * @alias Increase
+   * @param {String} object
+   * @param {String} property name
+   * @param {String} message _optional_
+   * @api public
+   */
+
+  function assertIncreases (object, prop, msg) {
+    if (msg) flag(this, 'message', msg);
+    var fn = flag(this, 'object');
+    new Assertion(object, msg).to.have.property(prop);
+    new Assertion(fn).is.a('function');
+
+    var initial = object[prop];
+    fn();
+
+    this.assert(
+      object[prop] - initial > 0
+      , 'expected .' + prop + ' to increase'
+      , 'expected .' + prop + ' to not increase'
+    );
+  }
+
+  Assertion.addChainableMethod('increase', assertIncreases);
+  Assertion.addChainableMethod('increases', assertIncreases);
+
+  /**
+   * ### .decrease(function)
+   *
+   * Asserts that a function decreases an object property
+   *
+   *     var obj = { val: 10 };
+   *     var fn = function() { obj.val = 5 };
+   *     expect(fn).to.decrease(obj, 'val');
+   *
+   * @name decrease
+   * @alias decreases
+   * @alias Decrease
+   * @param {String} object
+   * @param {String} property name
+   * @param {String} message _optional_
+   * @api public
+   */
+
+  function assertDecreases (object, prop, msg) {
+    if (msg) flag(this, 'message', msg);
+    var fn = flag(this, 'object');
+    new Assertion(object, msg).to.have.property(prop);
+    new Assertion(fn).is.a('function');
+
+    var initial = object[prop];
+    fn();
+
+    this.assert(
+      object[prop] - initial < 0
+      , 'expected .' + prop + ' to decrease'
+      , 'expected .' + prop + ' to not decrease'
+    );
+  }
+
+  Assertion.addChainableMethod('decrease', assertDecreases);
+  Assertion.addChainableMethod('decreases', assertDecreases);
+
 };
 
 },{}],11:[function(require,module,exports){
@@ -3500,6 +3666,42 @@ module.exports = function (chai, util) {
    *
    * @name isTrue
    * @param {Mixed} value
+   * @param {String} message
+   * @api public
+   */
+
+  assert.isAbove = function (val, abv, msg) {
+    new Assertion(val, msg).to.be.above(abv);
+  };
+
+   /**
+   * ### .isAbove(valueToCheck, valueToBeAbove, [message])
+   *
+   * Asserts `valueToCheck` is strictly greater than (>) `valueToBeAbove`
+   *
+   *     assert.isAbove(5, 2, '5 is strictly greater than 2');
+   *
+   * @name isAbove
+   * @param {Mixed} valueToCheck
+   * @param {Mixed} valueToBeAbove
+   * @param {String} message
+   * @api public
+   */
+
+  assert.isBelow = function (val, blw, msg) {
+    new Assertion(val, msg).to.be.below(blw);
+  };
+
+   /**
+   * ### .isBelow(valueToCheck, valueToBeBelow, [message])
+   *
+   * Asserts `valueToCheck` is strictly less than (<) `valueToBeBelow`
+   *
+   *     assert.isBelow(3, 6, '3 is strictly less than 6');
+   *
+   * @name isBelow
+   * @param {Mixed} valueToCheck
+   * @param {Mixed} valueToBeBelow
    * @param {String} message
    * @api public
    */
@@ -4284,6 +4486,25 @@ module.exports = function (chai, util) {
   }
 
   /**
+   * ### .sameDeepMembers(set1, set2, [message])
+   *
+   * Asserts that `set1` and `set2` have the same members - using a deep equality checking.
+   * Order is not taken into account.
+   *
+   *     assert.sameDeepMembers([ {b: 3}, {a: 2}, {c: 5} ], [ {c: 5}, {b: 3}, {a: 2} ], 'same deep members');
+   *
+   * @name sameDeepMembers
+   * @param {Array} set1
+   * @param {Array} set2
+   * @param {String} message
+   * @api public
+   */
+
+  assert.sameDeepMembers = function (set1, set2, msg) {
+    new Assertion(set1, msg).to.have.same.deep.members(set2);
+  }
+
+  /**
    * ### .includeMembers(superset, subset, [message])
    *
    * Asserts that `subset` is included in `superset`.
@@ -4300,6 +4521,132 @@ module.exports = function (chai, util) {
 
   assert.includeMembers = function (superset, subset, msg) {
     new Assertion(superset, msg).to.include.members(subset);
+  }
+
+   /**
+   * ### .changes(function, object, property)
+   *
+   * Asserts that a function changes the value of a property
+   *
+   *     var obj = { val: 10 };
+   *     var fn = function() { obj.val = 22 };
+   *     assert.changes(fn, obj, 'val');
+   *
+   * @name changes
+   * @param {Function} modifier function
+   * @param {Object} object
+   * @param {String} property name
+   * @param {String} message _optional_
+   * @api public
+   */
+
+  assert.changes = function (fn, obj, prop) {
+    new Assertion(fn).to.change(obj, prop);
+  }
+
+   /**
+   * ### .doesNotChange(function, object, property)
+   *
+   * Asserts that a function does not changes the value of a property
+   *
+   *     var obj = { val: 10 };
+   *     var fn = function() { console.log('foo'); };
+   *     assert.doesNotChange(fn, obj, 'val');
+   *
+   * @name doesNotChange
+   * @param {Function} modifier function
+   * @param {Object} object
+   * @param {String} property name
+   * @param {String} message _optional_
+   * @api public
+   */
+
+  assert.doesNotChange = function (fn, obj, prop) {
+    new Assertion(fn).to.not.change(obj, prop);
+  }
+
+   /**
+   * ### .increases(function, object, property)
+   *
+   * Asserts that a function increases an object property
+   *
+   *     var obj = { val: 10 };
+   *     var fn = function() { obj.val = 13 };
+   *     assert.increases(fn, obj, 'val');
+   *
+   * @name increases
+   * @param {Function} modifier function
+   * @param {Object} object
+   * @param {String} property name
+   * @param {String} message _optional_
+   * @api public
+   */
+
+  assert.increases = function (fn, obj, prop) {
+    new Assertion(fn).to.increase(obj, prop);
+  }
+
+   /**
+   * ### .doesNotIncrease(function, object, property)
+   *
+   * Asserts that a function does not increase object property
+   *
+   *     var obj = { val: 10 };
+   *     var fn = function() { obj.val = 8 };
+   *     assert.doesNotIncrease(fn, obj, 'val');
+   *
+   * @name doesNotIncrease
+   * @param {Function} modifier function
+   * @param {Object} object
+   * @param {String} property name
+   * @param {String} message _optional_
+   * @api public
+   */
+
+  assert.doesNotIncrease = function (fn, obj, prop) {
+    new Assertion(fn).to.not.increase(obj, prop);
+  }
+
+   /**
+   * ### .decreases(function, object, property)
+   *
+   * Asserts that a function decreases an object property
+   *
+   *     var obj = { val: 10 };
+   *     var fn = function() { obj.val = 5 };
+   *     assert.decreases(fn, obj, 'val');
+   *
+   * @name decreases
+   * @param {Function} modifier function
+   * @param {Object} object
+   * @param {String} property name
+   * @param {String} message _optional_
+   * @api public
+   */
+
+  assert.decreases = function (fn, obj, prop) {
+    new Assertion(fn).to.decrease(obj, prop);
+  }
+
+   /**
+   * ### .doesNotDecrease(function, object, property)
+   *
+   * Asserts that a function does not decreases an object property
+   *
+   *     var obj = { val: 10 };
+   *     var fn = function() { obj.val = 15 };
+   *     assert.doesNotDecrease(fn, obj, 'val');
+   *
+   * @name doesNotDecrease
+   * @param {Function} modifier function
+   * @param {Object} object
+   * @param {String} property name
+   * @param {String} message _optional_
+   * @api public
+   */
+
+  assert.doesNotDecrease = function (fn, obj, prop) {
+    new Assertion(fn).to.not.decrease(obj, prop);
   }
 
   /*!
@@ -4333,8 +4680,29 @@ module.exports = function (chai, util) {
   chai.expect = function (val, message) {
     return new chai.Assertion(val, message);
   };
-};
 
+  /**
+   * ### .fail(actual, expected, [message], [operator])
+   *
+   * Throw a failure.
+   *
+   * @name fail
+   * @param {Mixed} actual
+   * @param {Mixed} expected
+   * @param {String} message
+   * @param {String} operator
+   * @api public
+   */
+
+  chai.expect.fail = function (actual, expected, message, operator) {
+    message = message || 'expect.fail()';
+    throw new chai.AssertionError(message, {
+        actual: actual
+      , expected: expected
+      , operator: operator
+    }, chai.expect.fail);
+  };
+};
 
 },{}],13:[function(require,module,exports){
 /*!
@@ -4378,6 +4746,28 @@ module.exports = function (chai, util) {
     });
 
     var should = {};
+
+    /**
+     * ### .fail(actual, expected, [message], [operator])
+     *
+     * Throw a failure.
+     *
+     * @name fail
+     * @param {Mixed} actual
+     * @param {Mixed} expected
+     * @param {String} message
+     * @param {String} operator
+     * @api public
+     */
+
+    should.fail = function (actual, expected, message, operator) {
+      message = message || 'should.fail()';
+      throw new chai.AssertionError(message, {
+          actual: actual
+        , expected: expected
+        , operator: operator
+      }, should.fail);
+    };
 
     should.equal = function (val1, val2, msg) {
       new Assertion(val1, msg).to.equal(val2);
@@ -4529,7 +4919,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   });
 };
 
-},{"../config":9,"./flag":17,"./transferFlags":31}],15:[function(require,module,exports){
+},{"../config":9,"./flag":17,"./transferFlags":33}],15:[function(require,module,exports){
 /*!
  * Chai - addMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -4624,7 +5014,7 @@ module.exports = function (ctx, name, getter) {
  */
 
 /**
- * ### flag(object ,key, [value])
+ * ### flag(object, key, [value])
  *
  * Get or set a flag value on an object. If a
  * value is provided it will be set, else it will
@@ -4634,7 +5024,7 @@ module.exports = function (ctx, name, getter) {
  *     utils.flag(this, 'foo', 'bar'); // setter
  *     utils.flag(this, 'foo'); // getter, returns `bar`
  *
- * @param {Object} object (constructed Assertion
+ * @param {Object} object constructed Assertion
  * @param {String} key
  * @param {Mixed} value (optional)
  * @name flag
@@ -4749,7 +5139,7 @@ module.exports = function (obj, args) {
   return flagMsg ? flagMsg + ': ' + msg : msg;
 };
 
-},{"./flag":17,"./getActual":18,"./inspect":25,"./objDisplay":26}],21:[function(require,module,exports){
+},{"./flag":17,"./getActual":18,"./inspect":27,"./objDisplay":28}],21:[function(require,module,exports){
 /*!
  * Chai - getName utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -4773,11 +5163,124 @@ module.exports = function (func) {
 
 },{}],22:[function(require,module,exports){
 /*!
+ * Chai - getPathInfo utility
+ * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
+ * MIT Licensed
+ */
+
+var hasProperty = require('./hasProperty');
+
+/**
+ * ### .getPathInfo(path, object)
+ *
+ * This allows the retrieval of property info in an
+ * object given a string path.
+ *
+ * The path info consists of an object with the
+ * following properties:
+ *
+ * * parent - The parent object of the property referenced by `path`
+ * * name - The name of the final property, a number if it was an array indexer
+ * * value - The value of the property, if it exists, otherwise `undefined`
+ * * exists - Whether the property exists or not
+ *
+ * @param {String} path
+ * @param {Object} object
+ * @returns {Object} info
+ * @name getPathInfo
+ * @api public
+ */
+
+module.exports = function getPathInfo(path, obj) {
+  var parsed = parsePath(path),
+      last = parsed[parsed.length - 1];
+
+  var info = {
+    parent: _getPathValue(parsed, obj, parsed.length - 1),
+    name: last.p || last.i,
+    value: _getPathValue(parsed, obj),
+  };
+  info.exists = hasProperty(info.name, info.parent);
+
+  return info;
+};
+
+
+/*!
+ * ## parsePath(path)
+ *
+ * Helper function used to parse string object
+ * paths. Use in conjunction with `_getPathValue`.
+ *
+ *      var parsed = parsePath('myobject.property.subprop');
+ *
+ * ### Paths:
+ *
+ * * Can be as near infinitely deep and nested
+ * * Arrays are also valid using the formal `myobject.document[3].property`.
+ *
+ * @param {String} path
+ * @returns {Object} parsed
+ * @api private
+ */
+
+function parsePath (path) {
+  var str = path.replace(/\[/g, '.[')
+    , parts = str.match(/(\\\.|[^.]+?)+/g);
+  return parts.map(function (value) {
+    var re = /\[(\d+)\]$/
+      , mArr = re.exec(value);
+    if (mArr) return { i: parseFloat(mArr[1]) };
+    else return { p: value };
+  });
+}
+
+
+/*!
+ * ## _getPathValue(parsed, obj)
+ *
+ * Helper companion function for `.parsePath` that returns
+ * the value located at the parsed address.
+ *
+ *      var value = getPathValue(parsed, obj);
+ *
+ * @param {Object} parsed definition from `parsePath`.
+ * @param {Object} object to search against
+ * @param {Number} object to search against
+ * @returns {Object|Undefined} value
+ * @api private
+ */
+
+function _getPathValue (parsed, obj, index) {
+  var tmp = obj
+    , res;
+
+  index = (index === undefined ? parsed.length : index);
+
+  for (var i = 0, l = index; i < l; i++) {
+    var part = parsed[i];
+    if (tmp) {
+      if ('undefined' !== typeof part.p)
+        tmp = tmp[part.p];
+      else if ('undefined' !== typeof part.i)
+        tmp = tmp[part.i];
+      if (i == (l - 1)) res = tmp;
+    } else {
+      res = undefined;
+    }
+  }
+  return res;
+}
+
+},{"./hasProperty":25}],23:[function(require,module,exports){
+/*!
  * Chai - getPathValue utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
  * @see https://github.com/logicalparadox/filtr
  * MIT Licensed
  */
+
+var getPathInfo = require('./getPathInfo');
 
 /**
  * ### .getPathValue(path, object)
@@ -4808,74 +5311,12 @@ module.exports = function (func) {
  * @name getPathValue
  * @api public
  */
+module.exports = function(path, obj) {
+  var info = getPathInfo(path, obj);
+  return info.value;
+}; 
 
-var getPathValue = module.exports = function (path, obj) {
-  var parsed = parsePath(path);
-  return _getPathValue(parsed, obj);
-};
-
-/*!
- * ## parsePath(path)
- *
- * Helper function used to parse string object
- * paths. Use in conjunction with `_getPathValue`.
- *
- *      var parsed = parsePath('myobject.property.subprop');
- *
- * ### Paths:
- *
- * * Can be as near infinitely deep and nested
- * * Arrays are also valid using the formal `myobject.document[3].property`.
- *
- * @param {String} path
- * @returns {Object} parsed
- * @api private
- */
-
-function parsePath (path) {
-  var str = path.replace(/\[/g, '.[')
-    , parts = str.match(/(\\\.|[^.]+?)+/g);
-  return parts.map(function (value) {
-    var re = /\[(\d+)\]$/
-      , mArr = re.exec(value)
-    if (mArr) return { i: parseFloat(mArr[1]) };
-    else return { p: value };
-  });
-};
-
-/*!
- * ## _getPathValue(parsed, obj)
- *
- * Helper companion function for `.parsePath` that returns
- * the value located at the parsed address.
- *
- *      var value = getPathValue(parsed, obj);
- *
- * @param {Object} parsed definition from `parsePath`.
- * @param {Object} object to search against
- * @returns {Object|Undefined} value
- * @api private
- */
-
-function _getPathValue (parsed, obj) {
-  var tmp = obj
-    , res;
-  for (var i = 0, l = parsed.length; i < l; i++) {
-    var part = parsed[i];
-    if (tmp) {
-      if ('undefined' !== typeof part.p)
-        tmp = tmp[part.p];
-      else if ('undefined' !== typeof part.i)
-        tmp = tmp[part.i];
-      if (i == (l - 1)) res = tmp;
-    } else {
-      res = undefined;
-    }
-  }
-  return res;
-};
-
-},{}],23:[function(require,module,exports){
+},{"./getPathInfo":22}],24:[function(require,module,exports){
 /*!
  * Chai - getProperties utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -4912,7 +5353,72 @@ module.exports = function getProperties(object) {
   return result;
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
+/*!
+ * Chai - hasProperty utility
+ * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
+ * MIT Licensed
+ */
+
+var type = require('./type');
+
+/**
+ * ### .hasProperty(object, name)
+ *
+ * This allows checking whether an object has
+ * named property or numeric array index.
+ *
+ * Basically does the same thing as the `in`
+ * operator but works properly with natives
+ * and null/undefined values.
+ *
+ *     var obj = {
+ *         arr: ['a', 'b', 'c']
+ *       , str: 'Hello'
+ *     }
+ *
+ * The following would be the results.
+ *
+ *     hasProperty('str', obj);  // true
+ *     hasProperty('constructor', obj);  // true
+ *     hasProperty('bar', obj);  // false
+ *     
+ *     hasProperty('length', obj.str); // true
+ *     hasProperty(1, obj.str);  // true
+ *     hasProperty(5, obj.str);  // false
+ *
+ *     hasProperty('length', obj.arr);  // true
+ *     hasProperty(2, obj.arr);  // true
+ *     hasProperty(3, obj.arr);  // false
+ *
+ * @param {Objuect} object
+ * @param {String|Number} name
+ * @returns {Boolean} whether it exists
+ * @name getPathInfo
+ * @api public
+ */
+
+var literals = {
+    'number': Number
+  , 'string': String
+};
+
+module.exports = function hasProperty(name, obj) {
+  var ot = type(obj);
+
+  // Bad Object, obviously no props at all
+  if(ot === 'null' || ot === 'undefined')
+    return false;
+
+  // The `in` operator does not work with certain literals
+  // box these before the check
+  if(literals[ot] && typeof obj !== 'object')
+    obj = new literals[ot](obj);
+
+  return name in obj;
+};
+
+},{"./type":34}],26:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011 Jake Luer <jake@alogicalparadox.com>
@@ -4986,6 +5492,18 @@ exports.eql = require('deep-eql');
 exports.getPathValue = require('./getPathValue');
 
 /*!
+ * Deep path info
+ */
+
+exports.getPathInfo = require('./getPathInfo');
+
+/*!
+ * Check if a property exists
+ */
+
+exports.hasProperty = require('./hasProperty');
+
+/*!
  * Function name
  */
 
@@ -5028,7 +5546,7 @@ exports.addChainableMethod = require('./addChainableMethod');
 exports.overwriteChainableMethod = require('./overwriteChainableMethod');
 
 
-},{"./addChainableMethod":14,"./addMethod":15,"./addProperty":16,"./flag":17,"./getActual":18,"./getMessage":20,"./getName":21,"./getPathValue":22,"./inspect":25,"./objDisplay":26,"./overwriteChainableMethod":27,"./overwriteMethod":28,"./overwriteProperty":29,"./test":30,"./transferFlags":31,"./type":32,"deep-eql":34}],25:[function(require,module,exports){
+},{"./addChainableMethod":14,"./addMethod":15,"./addProperty":16,"./flag":17,"./getActual":18,"./getMessage":20,"./getName":21,"./getPathInfo":22,"./getPathValue":23,"./hasProperty":25,"./inspect":27,"./objDisplay":28,"./overwriteChainableMethod":29,"./overwriteMethod":30,"./overwriteProperty":31,"./test":32,"./transferFlags":33,"./type":34,"deep-eql":36}],27:[function(require,module,exports){
 // This is (almost) directly from Node.js utils
 // https://github.com/joyent/node/blob/f8c335d0caf47f16d31413f89aa28eda3878e3aa/lib/util.js
 
@@ -5363,7 +5881,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-},{"./getEnumerableProperties":19,"./getName":21,"./getProperties":23}],26:[function(require,module,exports){
+},{"./getEnumerableProperties":19,"./getName":21,"./getProperties":24}],28:[function(require,module,exports){
 /*!
  * Chai - flag utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -5414,7 +5932,7 @@ module.exports = function (obj) {
   }
 };
 
-},{"../config":9,"./inspect":25}],27:[function(require,module,exports){
+},{"../config":9,"./inspect":27}],29:[function(require,module,exports){
 /*!
  * Chai - overwriteChainableMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -5422,7 +5940,7 @@ module.exports = function (obj) {
  */
 
 /**
- * ### overwriteChainableMethod (ctx, name, fn)
+ * ### overwriteChainableMethod (ctx, name, method, chainingBehavior)
  *
  * Overwites an already existing chainable method
  * and provides access to the previous function or
@@ -5469,7 +5987,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   };
 };
 
-},{}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /*!
  * Chai - overwriteMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -5522,7 +6040,7 @@ module.exports = function (ctx, name, method) {
   }
 };
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /*!
  * Chai - overwriteProperty utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -5578,7 +6096,7 @@ module.exports = function (ctx, name, getter) {
   });
 };
 
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /*!
  * Chai - test utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -5606,7 +6124,7 @@ module.exports = function (obj, args) {
   return negate ? !expr : expr;
 };
 
-},{"./flag":17}],31:[function(require,module,exports){
+},{"./flag":17}],33:[function(require,module,exports){
 /*!
  * Chai - transferFlags utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -5629,9 +6147,9 @@ module.exports = function (obj, args) {
  *     utils.transferFlags(assertion, anotherAssertion, false);
  *
  * @param {Assertion} assertion the assertion to transfer the flags from
- * @param {Object} object the object to transfer the flags too; usually a new assertion
+ * @param {Object} object the object to transfer the flags to; usually a new assertion
  * @param {Boolean} includeAll
- * @name getAllFlags
+ * @name transferFlags
  * @api private
  */
 
@@ -5652,7 +6170,7 @@ module.exports = function (assertion, object, includeAll) {
   }
 };
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /*!
  * Chai - type utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -5699,7 +6217,7 @@ module.exports = function (obj) {
   return typeof obj;
 };
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /*!
  * assertion-error
  * Copyright(c) 2013 Jake Luer <jake@qualiancy.com>
@@ -5811,10 +6329,10 @@ AssertionError.prototype.toJSON = function (stack) {
   return props;
 };
 
-},{}],34:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = require('./lib/eql');
 
-},{"./lib/eql":35}],35:[function(require,module,exports){
+},{"./lib/eql":37}],37:[function(require,module,exports){
 /*!
  * deep-eql
  * Copyright(c) 2013 Jake Luer <jake@alogicalparadox.com>
@@ -6073,10 +6591,10 @@ function objectEqual(a, b, m) {
   return true;
 }
 
-},{"buffer":2,"type-detect":36}],36:[function(require,module,exports){
+},{"buffer":2,"type-detect":38}],38:[function(require,module,exports){
 module.exports = require('./lib/type');
 
-},{"./lib/type":37}],37:[function(require,module,exports){
+},{"./lib/type":39}],39:[function(require,module,exports){
 /*!
  * type-detect
  * Copyright(c) 2013 jake luer <jake@alogicalparadox.com>
@@ -6220,7 +6738,7 @@ Library.prototype.test = function (obj, type) {
   }
 };
 
-},{}],38:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 var assert = require('chai').assert,
@@ -6347,4 +6865,4 @@ describe('WithPromise', function () {
         });
     });
 });
-},{"..":1,"chai":6}]},{},[38]);
+},{"..":1,"chai":6}]},{},[40]);

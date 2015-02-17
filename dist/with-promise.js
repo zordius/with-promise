@@ -15,25 +15,20 @@ WithPromise.prototype = {
 
     then: function (resolve, reject) {
         var self = this;
-        return this.wrap(this._with_promise.then(resolve ? function () {
-            return resolve.apply(self._with_context, arguments);
-        } : undefined, reject ? function () {
-            return reject.apply(self._with_context, arguments);
-        } : undefined));
+        return this.wrap(this._with_promise.then(
+            resolve ? resolve.bind(self._with_context) : undefined,
+            reject ? reject.bind(self._with_context) : undefined
+        ));
     },
 
     'catch': function (next) {
         var self = this;
-        return this.wrap(this._with_promise['catch'](function () {
-            return next.apply(self._with_context, arguments);
-        }));
+        return this.wrap(this._with_promise['catch'](next.bind(self._with_context)));
     }
 };
 
 WithPromise.create = function (executor, context) {
-    return new WithPromise(new Promise(function () {
-        executor.apply(context, arguments);
-    }), context);
+    return new WithPromise(new Promise(executor.bind(context)), context);
 };
 
 WithPromise.resolve = function (value, context) {
