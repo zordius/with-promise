@@ -34,16 +34,16 @@ module.exports = function (grunt) {
             {browserName: 'Android', version:'4.4', platform: 'Linux'},
             {browserName: 'Android', version:'4.1', platform: 'Linux'},
             {browserName: 'Android', version:'4.0', platform: 'Linux'},
-            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'8.1', appiumVersion: '1.3.4'},
-            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'8.0', appiumVersion: '1.3.4'},
-            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'7.1', appiumVersion: '1.3.4'},
-            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'7.0', appiumVersion: '1.3.4'},
-            {browserName: 'Safari', deviceName: 'iPhone Simulator', platformName: 'iOS', platformVersion:'6.1', appiumVersion: '1.3.4'},
-            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'8.1', appiumVersion: '1.3.4'},
-            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'8.0', appiumVersion: '1.3.4'},
-            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'7.1', appiumVersion: '1.3.4'},
-            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'7.0', appiumVersion: '1.3.4'},
-            {browserName: 'Safari', deviceName: 'iPad Simulator', platformName: 'iOS', platformVersion:'6.1', appiumVersion: '1.3.4'}
+            {browserName: 'iphone', version:'8.1', platform: 'OS X 10.10'},
+            {browserName: 'iphone', version:'8.0', platform: 'OS X 10.10'},
+            {browserName: 'iphone', version:'7.1', platform: 'OS X 10.10'},
+            {browserName: 'iphone', version:'7.0', platform: 'OS X 10.9'},
+            {browserName: 'iphone', version:'6.1', platform: 'OS X 10.8'},
+            {browserName: 'ipad', version:'8.1', platform: 'OS X 10.10'},
+            {browserName: 'ipad', version:'8.0', platform: 'OS X 10.10'},
+            {browserName: 'ipad', version:'7.1', platform: 'OS X 10.10'},
+            {browserName: 'ipad', version:'7.0', platform: 'OS X 10.9'},
+            {browserName: 'ipad', version:'6.1', platform: 'OS X 10.8'}
           ]
         }
       }
