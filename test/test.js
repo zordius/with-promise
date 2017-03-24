@@ -58,7 +58,7 @@ describe('WithPromise', function () {
             D.two = this;
             return D;
         }).then(function (E) {
-            assert.deepEqual({b: {a: 1 }, c:'OK', d:'ya', two:{a: 1 }}, E);
+            assert.deepEqual({b: {a: 1}, c:'OK', d:'ya', two:{a: 1}}, E);
             assert.equal(1, this.a);
             done();
         });
@@ -81,7 +81,7 @@ describe('WithPromise', function () {
     });
 
     it('should create a rejected promise when error in executor', function (done) {
-        WithPromise.create(function () {throw new Error(123)}, {a: 2}).catch(function (E) {
+        WithPromise.create(function () {throw new Error(123);}, {a: 2}).catch(function (E) {
             assert.equal(2, this.a);
             assert.equal(123, E.message);
             done();
@@ -98,7 +98,7 @@ describe('WithPromise', function () {
 
     it('.all() should wrap Promise.all with context for executor', function (done) {
         WithPromise.all([1, 2,
-            WithPromise.create(function () {throw new Error(123)}, {a: 3})
+            WithPromise.create(function () {throw new Error(123);}, {a: 3})
         ], {a: 2}).catch(function (E) {
             assert.equal(2, this.a);
             assert.equal(123, E.message);

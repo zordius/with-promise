@@ -24,12 +24,14 @@
     "build_tst": "browserify test/test.js -o dist/browserTest.js",
     "build_min": "uglifyjs dist/with-promise.js -c -o dist/with-promise-min.js",
     "coverage": "istanbul cover -- _mocha -R spec",
+    "lint": "eslint .",
     "test": "mocha"
   },
   "main": "./index.js",
   "devDependencies": {
     "bluebird": "2.5.2",
     "chai": "*",
+    "eslint": "^3.18.0",
     "istanbul": "*",
     "mocha": "*"
   },
