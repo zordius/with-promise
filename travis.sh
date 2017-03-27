@@ -33,9 +33,11 @@ git pull origin gh-pages
 rm *
 cp test/index.html .
 cp node_modules/mocha/mocha.js .
-git add index.html mocha.js dist/
+cp dist/* testdist/
+git add index.html mocha.js testdist/
 git commit -m "New tests on github"
 git push origin gh-pages
+git checkout TRAVIS_COMMIT
 
 # do sauce labs tests
 node_modules/.bin/grunt || exit $?
