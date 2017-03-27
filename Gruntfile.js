@@ -19,9 +19,6 @@ module.exports = function (grunt) {
                         tags: [process.env.TRAVIS_JOB_ID, process.env.TRAVIS_COMMIT, 'withPromise', 'mocha'],
                         public: 'public'
                     },
-                    // https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy+FAQS
-                    // https://wiki.saucelabs.com/pages/viewpage.action?pageId=48365781
-                    tunnelArgs: ['-B', 'www.google.com'],
                     detailedError: true,
                     concurrency: 2,
                     throttled: 3,
@@ -38,9 +35,9 @@ module.exports = function (grunt) {
                         {browserName: 'internet explorer', version: 11, platform: 'Windows 8.1'},
                         {browserName: 'internet explorer', version: 10, platform: 'Windows 8'},
                         {browserName: 'internet explorer', version: 9, platform: 'Windows 7'},
-            {browserName: 'Android', version: '4.4', platform: 'Linux'},
-            {browserName: 'Android', version: '4.1', platform: 'Linux'},
-            {browserName: 'Android', version: '4.0', platform: 'Linux'},
+//            {browserName: 'Android', version: '4.4', platform: 'Linux'},
+//            {browserName: 'Android', version: '4.1', platform: 'Linux'},
+//            {browserName: 'Android', version: '4.0', platform: 'Linux'},
             {browserName: 'iphone', version: '8.1', platform: 'OS X 10.10'},
             {browserName: 'iphone', version: '8.0', platform: 'OS X 10.10'},
             {browserName: 'iphone', version: '7.1', platform: 'OS X 10.10'},
