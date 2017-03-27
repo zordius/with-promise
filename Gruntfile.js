@@ -41,16 +41,12 @@ module.exports = function (grunt) {
                         {browserName: '', platformVersion: '4.4', platformName: 'Android'},
                         {browserName: '', platformVersion: '4.1', platformName: 'Android'},
                         {browserName: '', platformVersion: '4.0', platformName: 'Android'},
-                        {browserName: 'iphone', version:'8.1', platform: 'OS X 10.10'},
-                        {browserName: 'iphone', version:'8.0', platform: 'OS X 10.10'},
-                        {browserName: 'iphone', version:'7.1', platform: 'OS X 10.10'},
-                        {browserName: 'iphone', version:'7.0', platform: 'OS X 10.9'},
-                        {browserName: 'iphone', version:'6.1', platform: 'OS X 10.8'},
-                        {browserName: 'ipad', version:'8.1', platform: 'OS X 10.10'},
-                        {browserName: 'ipad', version:'8.0', platform: 'OS X 10.10'},
-                        {browserName: 'ipad', version:'7.1', platform: 'OS X 10.10'},
-                        {browserName: 'ipad', version:'7.0', platform: 'OS X 10.9'},
-                        {browserName: 'ipad', version:'6.1', platform: 'OS X 10.8'}
+                        {deviceName: 'iPhone Simulator', platformVersion: '10.2', platformName: 'iOS'},
+                        {deviceName: 'iPhone Simulator', platformVersion: '9.3', platformName: 'iOS'},
+                        {deviceName: 'iPhone Simulator', platformVersion: '8.4', platformName: 'iOS'},
+                        {deviceName: 'iPad Simulator', platformVersion: '10.2', platformName: 'iOS'},
+                        {deviceName: 'iPad Simulator', platformVersion: '9.3', platformName: 'iOS'},
+                        {deviceName: 'iPad Simulator', platformVersion: '8.4', platformName: 'iOS'}
                     ]
                 }
             }
