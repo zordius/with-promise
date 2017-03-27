@@ -24,7 +24,9 @@ module.exports = function (grunt) {
                     // tunnelArgs: ['-B', 'www.google.com'],
                     detailedError: true,
                     concurrency: 2,
+                    throttled: 6,
                     maxPollRetries: 3,
+                    maxRetries: 2,
                     'max-duration': 300,
                     browsers: [
                         {browserName: 'chrome'},
