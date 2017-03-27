@@ -19,7 +19,9 @@ module.exports = function (grunt) {
                         tags: [process.env.TRAVIS_JOB_ID, process.env.TRAVIS_COMMIT, 'withPromise', 'mocha'],
                         public: 'public'
                     },
-                    tunnelArgs: ['-B', 'www.google.com'],
+                    // https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy+FAQS
+                    // https://wiki.saucelabs.com/pages/viewpage.action?pageId=48365781
+                    // tunnelArgs: ['-B', 'www.google.com'],
                     detailedError: true,
                     concurrency: 2,
                     maxPollRetries: 3,
