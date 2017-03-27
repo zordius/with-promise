@@ -4,7 +4,7 @@ module.exports = function (grunt) {
             all: {
                 options: {
                     build: process.env.TRAVIS_JOB_ID,
-                    urls: ['http://localhost:9999/test/'],
+                    urls: ['http://zordius.github.io/with-promise/'],
                     testname: 'Mocha Unit Test for with-promise',
                     sauceConfig: {
                         tags: [process.env.TRAVIS_JOB_ID, process.env.TRAVIS_COMMIT, 'withPromise', 'mocha'],
