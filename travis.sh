@@ -43,8 +43,8 @@ cp test/* tmp/test/
 git checkout origin/gh-pages -B gh-pages
 cp tmp/test/index.html .
 cp tmp/dist/* testdist/
-cp node_modules/mocha/mocha.js .
-git add index.html mocha.js testdist/
+cp node_modules/mocha/mocha.js testdist/
+git add index.html testdist/
 git commit -m "New tests on github"
 git push origin gh-pages
 git checkout ${TRAVIS_COMMIT}
