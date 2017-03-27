@@ -21,7 +21,7 @@ module.exports = function (grunt) {
                     },
                     // https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy+FAQS
                     // https://wiki.saucelabs.com/pages/viewpage.action?pageId=48365781
-                    // tunnelArgs: ['-B', 'www.google.com'],
+                    tunnelArgs: ['-B', 'www.google.com'],
                     detailedError: true,
                     concurrency: 2,
                     throttled: 3,
