@@ -28,7 +28,7 @@ if [ $CODE -ne 0 ]; then
 fi
 
 # do sauce labs tests
-node_modules/.bin/grunt || exit $?
+node_modules/.bin/grunt --force || exit $?
 
 # Setup git
 git config --global user.name "Travis-CI"
