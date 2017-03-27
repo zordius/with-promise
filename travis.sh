@@ -36,16 +36,14 @@ git add dist
 git commit -m "Auto build dist files for ${TRAVIS_COMMIT} [ci skip]"
 
 # push test files to gh-pages
-git checkout -B gh-pages
-git pull origin gh-pages
-rm *
+git checkout origin/gh-pages -B gh-pages
 cp test/index.html .
 cp node_modules/mocha/mocha.js .
 cp dist/* testdist/
 git add index.html mocha.js testdist/
 git commit -m "New tests on github"
 git push origin gh-pages
-git checkout TRAVIS_COMMIT
+git checkout ${TRAVIS_COMMIT}
 
 # wait github update gh-pages
 sleep 10
