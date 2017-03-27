@@ -38,6 +38,20 @@ module.exports = function (grunt) {
                         {browserName: 'internet explorer', version: 11, platform: 'Windows 8.1'},
                         {browserName: 'internet explorer', version: 10, platform: 'Windows 8'},
                         {browserName: 'internet explorer', version: 9, platform: 'Windows 7'},
+            {browserName: 'Android', version: '4.4', platform: 'Linux'},
+            {browserName: 'Android', version: '4.1', platform: 'Linux'},
+            {browserName: 'Android', version: '4.0', platform: 'Linux'},
+            {browserName: 'iphone', version: '8.1', platform: 'OS X 10.10'},
+            {browserName: 'iphone', version: '8.0', platform: 'OS X 10.10'},
+            {browserName: 'iphone', version: '7.1', platform: 'OS X 10.10'},
+            {browserName: 'iphone', version: '7.0', platform: 'OS X 10.9'},
+            {browserName: 'iphone', version: '6.1', platform: 'OS X 10.8'},
+            {browserName: 'ipad', version: '8.1', platform: 'OS X 10.10'},
+            {browserName: 'ipad', version: '8.0', platform: 'OS X 10.10'},
+            {browserName: 'ipad', version: '7.1', platform: 'OS X 10.10'},
+            {browserName: 'ipad', version: '7.0', platform: 'OS X 10.9'},
+            {browserName: 'ipad', version: '6.1', platform: 'OS X 10.8'}
+/*
                         {deviceName: 'Android Emulator', platformVersion: '5.1', platformName: 'Android'},
                         {deviceName: 'Android Emulator', platformVersion: '5.0', platformName: 'Android'},
                         {deviceName: 'Android Emulator', platformVersion: '4.4', platformName: 'Android'},
@@ -49,6 +63,7 @@ module.exports = function (grunt) {
                         {deviceName: 'iPad Simulator', platformVersion: '10.2', platformName: 'iOS'},
                         {deviceName: 'iPad Simulator', platformVersion: '9.3', platformName: 'iOS'},
                         {deviceName: 'iPad Simulator', platformVersion: '8.4', platformName: 'iOS'}
+*/
                     ]
                 }
             }
