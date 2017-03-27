@@ -37,6 +37,7 @@ git commit -m "Auto build dist files for ${TRAVIS_COMMIT} [ci skip]"
 
 # push test files to gh-pages
 mkdir -p tmp/dist
+mkdir tmp/test
 cp dist/* tmp/dist/
 cp test/* tmp/test/
 git checkout origin/gh-pages -B gh-pages
