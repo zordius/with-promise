@@ -27,6 +27,14 @@ if [ $CODE -ne 0 ]; then
   exit 1
 fi
 
+# Setup git
+git config --global user.name "Travis-CI"
+git config --global user.email "zordius@yahoo-inc.com"
+
+# commit dist first
+git add dist
+git commit -m "Auto build dist files for ${TRAVIS_COMMIT} [ci skip]"
+
 # push test files to gh-pages
 git checkout -B gh-pages
 git pull origin gh-pages
@@ -44,13 +52,6 @@ sleep 10
 
 # do sauce labs tests
 node_modules/.bin/grunt || exit $?
-
-# Setup git
-git config --global user.name "Travis-CI"
-git config --global user.email "zordius@yahoo-inc.com"
-
-git add dist
-git commit -m "Auto build dist files for ${TRAVIS_COMMIT} [ci skip]"
 
 node_modules/.bin/badge-saucelabs-results > badge.json
 cat badge.json
