@@ -39,6 +39,9 @@ git commit -m "New tests on github"
 git push origin gh-pages
 git checkout TRAVIS_COMMIT
 
+# wait github update gh-pages
+sleep 10
+
 # do sauce labs tests
 node_modules/.bin/grunt || exit $?
 
