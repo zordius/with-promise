@@ -1,14 +1,5 @@
 module.exports = function (grunt) {
     grunt.initConfig({
-        connect: {
-            server: {
-                options: {
-                    base: '.',
-                    hostname: '*',
-                    port: 9999
-                }
-            }
-        },
         'saucelabs-mocha': {
             all: {
                 options: {
@@ -19,6 +10,7 @@ module.exports = function (grunt) {
                         tags: [process.env.TRAVIS_JOB_ID, process.env.TRAVIS_COMMIT, 'withPromise', 'mocha'],
                         public: 'public'
                     },
+                    tunneled: false,
                     detailedError: true,
                     concurrency: 2,
                     throttled: 3,
@@ -34,28 +26,13 @@ module.exports = function (grunt) {
                         {browserName: 'MicrosoftEdge', version: 14, platform: 'Windows 10'},
                         {browserName: 'internet explorer', version: 11, platform: 'Windows 8.1'},
                         {browserName: 'internet explorer', version: 10, platform: 'Windows 8'},
-                        {browserName: 'internet explorer', version: 9, platform: 'Windows 7'},
-/*
-                        {deviceName: 'Android Emulator', platformVersion: '5.1', platformName: 'Android'},
-                        {deviceName: 'Android Emulator', platformVersion: '5.0', platformName: 'Android'},
-                        {deviceName: 'Android Emulator', platformVersion: '4.4', platformName: 'Android'},
-                        {deviceName: 'Android Emulator', platformVersion: '4.1', platformName: 'Android'},
-                        {deviceName: 'Android Emulator', platformVersion: '4.0', platformName: 'Android'},
-                        {deviceName: 'iPhone Simulator', platformVersion: '10.2', platformName: 'iOS'},
-                        {deviceName: 'iPhone Simulator', platformVersion: '9.3', platformName: 'iOS'},
-                        {deviceName: 'iPhone Simulator', platformVersion: '8.4', platformName: 'iOS'},
-                        {deviceName: 'iPad Simulator', platformVersion: '10.2', platformName: 'iOS'},
-                        {deviceName: 'iPad Simulator', platformVersion: '9.3', platformName: 'iOS'},
-*/
-                        {deviceName: 'iPad Simulator', platformVersion: '8.4', platformName: 'iOS'}
+                        {browserName: 'internet explorer', version: 9, platform: 'Windows 7'}
                     ]
                 }
             }
         }
     });
 
-    grunt.loadNpmTasks('grunt-contrib-connect');
     grunt.loadNpmTasks('grunt-saucelabs');
-
-    grunt.registerTask('default', ['connect:server', 'saucelabs-mocha']);
+    grunt.registerTask('default', ['saucelabs-mocha']);
 };

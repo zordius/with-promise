@@ -27,6 +27,16 @@ if [ $CODE -ne 0 ]; then
   exit 1
 fi
 
+# push test files to gh-pages
+git checkout -B gh-pages
+git pull origin gh-pages
+rm *
+cp test/index.html .
+cp node_modules/mocha/mocha.js .
+git add index.html mocha.js dist/
+git commit -m "New tests on github"
+git push origin gh-pages
+
 # do sauce labs tests
 node_modules/.bin/grunt || exit $?
 
