@@ -19,7 +19,7 @@ module.exports = function (grunt) {
                     'max-duration': 300,
                     browsers: [
                         {browserName: 'chrome'},
-                        {browserName: 'firefox'},
+                        {browserName: 'firefox', platform: 'Linux'},
                         {browserName: 'safari', version: 10, platform: 'OS X 10.12'},
                         {browserName: 'safari', version: 9, platform: 'OS X 10.11'},
                         {browserName: 'safari', version: 8, platform: 'OS X 10.10'},
