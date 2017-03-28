@@ -34,6 +34,7 @@ git config --global user.email "zordius@yahoo-inc.com"
 # commit dist first
 git add dist
 git commit -m "Auto build dist files for ${TRAVIS_COMMIT} [ci skip]"
+git checkout -b dist_ready
 
 # push test files to gh-pages
 mkdir -p tmp/dist
@@ -48,7 +49,7 @@ cp node_modules/mocha/mocha.css testdist/
 git add index.html testdist/
 git commit -m "New tests on github"
 git push origin gh-pages
-git checkout ${TRAVIS_COMMIT}
+git checkout dist_ready
 
 # wait github update gh-pages
 sleep 10
@@ -63,4 +64,4 @@ git add badge.png
 git commit -m "Auto commit browser badge for ${TRAVIS_COMMIT} [ci skip]"
 
 # push back dist files
-git push "https://${GHTK}@github.com/zordius/with-promise.git" HEAD:${TRAVIS_BRANCH} > /dev/null 2>&1
+git push "https://${GHTK}@github.com/zordius/with-promise.git" dist_ready:master > /dev/null 2>&1
