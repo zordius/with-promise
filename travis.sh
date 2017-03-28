@@ -41,8 +41,8 @@ mkdir -p tmp/dist
 mkdir tmp/test
 cp dist/* tmp/dist/
 cp test/* tmp/test/
-git fetch origin gh-pages
-git checkout origin/gh-pages -B gh-pages
+git fetch origin gh-pages:gh-pages
+git checkout gh-pages
 cp tmp/test/index.html .
 cp tmp/dist/* testdist/
 cp node_modules/mocha/mocha.js testdist/
