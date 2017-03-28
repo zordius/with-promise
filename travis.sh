@@ -41,6 +41,7 @@ mkdir -p tmp/dist
 mkdir tmp/test
 cp dist/* tmp/dist/
 cp test/* tmp/test/
+git fetch origin gh-pages
 git checkout origin/gh-pages -B gh-pages
 cp tmp/test/index.html .
 cp tmp/dist/* testdist/
