@@ -48,9 +48,8 @@ cp tmp/dist/* testdist/
 cp node_modules/mocha/mocha.js testdist/
 cp node_modules/mocha/mocha.css testdist/
 git add index.html testdist/
-git commit -m "New tests on github"
-git log
-git push "https://${GHTK}@github.com/zordius/with-promise.git" gh-pages:gh-pages > /dev/null 2>&1
+git commit -m "New tests on github for ${TRAVIS_COMMIT} [ci skip]"
+git push "https://${GHTK}@github.com/zordius/with-promise.git" gh-pages:gh-pages -f > /dev/null 2>&1
 git checkout dist_ready
 
 # wait github update gh-pages
