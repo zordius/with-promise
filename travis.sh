@@ -37,21 +37,22 @@ git commit -m "Auto build dist files for ${TRAVIS_COMMIT} [ci skip]"
 git checkout -b dist_ready
 
 # push test files to gh-pages
+# push test files to gh-pages
 mkdir -p tmp/dist
 mkdir tmp/test
 cp dist/* tmp/dist/
 cp test/* tmp/test/
-git checkout -B gh-pages
-git pull origin gh-pages
-rm *
+git fetch origin gh-pages:gh-pages
+git checkout gh-pages
 cp tmp/test/index.html .
-mkdir testdist
 cp tmp/dist/* testdist/
 cp node_modules/mocha/mocha.js testdist/
 cp node_modules/mocha/mocha.css testdist/
 git add index.html testdist/
 git commit -m "New tests on github for ${TRAVIS_COMMIT} [ci skip]"
-git push origin gh-pages
+git push --force --quiet "https://${GHTK}@github.com/zordius/with-promise.git" gh-pages:gh-pages > /dev/null 2>&1
+git checkout dist_ready
+
 git checkout dist_ready
 
 # wait github update gh-pages
