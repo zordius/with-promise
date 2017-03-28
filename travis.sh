@@ -41,15 +41,17 @@ mkdir -p tmp/dist
 mkdir tmp/test
 cp dist/* tmp/dist/
 cp test/* tmp/test/
-git fetch origin gh-pages:gh-pages
-git checkout gh-pages
+git checkout -B gh-pages
+git pull origin gh-pages
+rm *
 cp tmp/test/index.html .
+mkdir testdist
 cp tmp/dist/* testdist/
 cp node_modules/mocha/mocha.js testdist/
 cp node_modules/mocha/mocha.css testdist/
 git add index.html testdist/
 git commit -m "New tests on github for ${TRAVIS_COMMIT} [ci skip]"
-git push "https://${GHTK}@github.com/zordius/with-promise.git" gh-pages:gh-pages -f > /dev/null 2>&1
+git push origin gh-pages
 git checkout dist_ready
 
 # wait github update gh-pages
