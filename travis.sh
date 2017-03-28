@@ -45,6 +45,7 @@ cp test/* tmp/test/
 git fetch origin gh-pages:gh-pages
 git checkout gh-pages
 cp tmp/test/index.html .
+mkdir testdist
 cp tmp/dist/* testdist/
 cp node_modules/mocha/mocha.js testdist/
 cp node_modules/mocha/mocha.css testdist/
