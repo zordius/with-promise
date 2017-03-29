@@ -14,6 +14,7 @@ module.exports = function (grunt) {
                     detailedError: true,
                     concurrency: 4,
                     pollInterval: 5000,
+                    statusCheckAttempts: 100,
                     throttled: 4,
                     maxPollRetries: 3,
                     maxRetries: 2,
