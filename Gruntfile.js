@@ -30,7 +30,7 @@ module.exports = function (grunt) {
                         {browserName: 'iphone', version:'10.2', platform: 'OS X 10.10'},
                         {browserName: 'iphone', version:'9.3', platform: 'OS X 10.10'},
                         {browserName: 'iphone', version:'8.4', platform: 'OS X 10.10'},
-                        {browserName: 'iphone', version:'7.1', platform: 'OS X 10.10'}
+                        {browserName: 'iphone', version:'7.1', platform: 'OS X 10.10'},
                         {browserName: 'iphone', version:'6.1', platform: 'OS X 10.8'}
                     ]
                 }
